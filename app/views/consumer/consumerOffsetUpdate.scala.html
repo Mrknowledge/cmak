@@ -1,0 +1,50 @@
+@*
+* Copyright 2015 Yahoo Inc. Licensed under the Apache License, Version 2.0
+* See accompanying LICENSE file.
+*@
+@import scalaz.{\/}
+@(cluster: String,consumerGroup:String,topic: String,consumerType:String, partitionNum:Int, errorOrForm: kafka.manager.ApiError \/ (Form[models.form.UpdateConsumerOffsets], kafka.manager.model.ClusterContext)
+)(implicit af: features.ApplicationFeatures, messages: play.api.i18n.Messages, menus: models.navigation.Menus, request:RequestHeader)
+
+@implicitFieldConstructor = @{ b4.vertical.fieldConstructor() }
+@import controllers.routes
+
+@theMenu = {
+    @views.html.navigation.clusterMenu(cluster,"Topic","Update Offsets",menus.clusterMenus(cluster)(
+        errorOrForm.toOption.map(_._2.clusterFeatures).getOrElse(kafka.manager.features.ClusterFeatures.default)))
+}
+        
+@renderForm(updateOffsetForm: Form[models.form.UpdateConsumerOffsets]) = {
+    @b4.vertical.form(routes.Consumer.handleConsumerOffsetUpdateByPartition(cluster, consumerGroup, topic, partitionNum)) { implicit vfc =>
+        <table class="table">
+            <tbody>
+                <tr>
+                <td>
+                <!--@b4.text(updateOffsetForm("consumerGroup"), '_label -> "consumerGroup", 'placeholder -> "")-->
+                <!--@b4.text(updateOffsetForm("partitionNum"), '_label -> "partitionNum", 'placeholder -> "", 'disabled -> true)-->
+                @b4.text(updateOffsetForm("offsets"), '_label -> "Offsets", 'placeholder -> "8", 'autofocus -> true )
+                <!--@b4.hidden(updateOffsetForm("readVersion").name,updateOffsetForm("readVersion").value.getOrElse(-1))-->
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        @b4.submit('class -> "submit-button btn btn-primary"){ Save Offsets }
+		<a onclick="goBack()" class="cancel-button btn btn-default" role="button">Cancel</a>
+        <!--<a href="@routes.Topic.topic(cluster,topic)" class="cancel-button btn btn-default" role="button">Cancel</a>-->
+    }
+}
+
+@main(
+    "Update Offsets",
+    menu = theMenu,
+    breadcrumbs=views.html.navigation.breadCrumbs(models.navigation.BreadCrumbs.withNamedViewAndClusterAndConsumerWithType("Consumer View",cluster,consumerGroup,consumerType,topic))) {
+    <div class="col-md-6 un-pad-me">
+        <div class="panel panel-default">
+            <div class="panel-heading"><h3><button type="button" class="btn btn-link" onclick="goBack()"><span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span></button>@consumerGroup / @topic / @partitionNum</h3></div>
+            <div class="panel-body">
+                @errorOrForm.fold( views.html.errors.onApiError(_), t => renderForm(t._1))
+            </div>
+        </div>
+    </div>
+}
+

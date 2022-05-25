@@ -1,0 +1,43 @@
+@*
+* Copyright 2015 Yahoo Inc. Licensed under the Apache License, Version 2.0
+* See accompanying LICENSE file.errorOrConsumerIdentity: kafka.manager.ApiError \/ kafka.manager.model.ActorModel.ConsumerIdentity
+*@
+@import scalaz.{\/}
+@(cluster:String,
+  consumer: String,
+  topic: String,
+  errorOrConsumedTopicState: kafka.manager.ApiError \/ kafka.manager.model.ActorModel.ConsumedTopicState
+)(implicit af: features.ApplicationFeatures, messages: play.api.i18n.Messages, menus: models.navigation.Menus, request:RequestHeader)
+
+@implicitFieldConstructor = @{ b4.vertical.fieldConstructor() }
+
+@theMenu = {
+    @views.html.navigation.clusterMenu(cluster,"Consumer","",menus.clusterMenus(cluster)(
+        errorOrConsumedTopicState.toOption.map(_.clusterContext.clusterFeatures).getOrElse(kafka.manager.features.ClusterFeatures.default)))
+}
+
+@main(
+    "Consumer View",
+    menu = theMenu,
+    breadcrumbs=views.html.navigation.breadCrumbs(models.navigation.BreadCrumbs.withNamedViewAndCluster("Consumer View",cluster,consumer))) {
+<div class="col-md-12 un-pad-me">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3><button type="button" class="btn btn-link" onclick="goBack()"><span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span></button>@consumer</h3>
+        </div>
+        <h3>Are you sure you want to delete @consumer?</h3></br></br>
+        <div class="row">
+            <div class="col-md-3"><button type="button" class="btn btn-primary btn-block" onclick="goBack()">No</button></div>
+			<div class="col-md-2">
+                @b4.vertical.form(routes.Consumer.handleDelConsumerGroup(cluster, consumer)) { implicit vfc =>
+                    <fieldset>
+                        @b4.hidden("topic",topic)
+                        @b4.submit('class -> "btn btn-primary btn-block"){ Delete }
+                    </fieldset>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+}
+
